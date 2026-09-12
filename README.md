@@ -51,6 +51,7 @@ Alongside the export, every trace, generation, and score is mirrored into Convex
 - [Type Reference](#type-reference)
 - [Database Schema](#database-schema)
 - [Testing](#testing)
+- [Example App](#example-app)
 - [Limitations](#limitations)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
@@ -194,6 +195,8 @@ await langfuse.logGeneration(ctx, { traceId, name: "generate-answer", ... });
 | `listTracesBySession(ctx, args)` | query | List a session's traces, newest first |
 | `listObservations(ctx, args)` | query | List a trace's observations, oldest first |
 | `listScores(ctx, args)` | query | List a trace's scores |
+| `listRecentTraces(ctx, args?)` | query | Every trace, newest first, regardless of user/session — for a history view or dashboard |
+| `getStats(ctx)` | query | Aggregate trace/observation/score counts for a small dashboard |
 
 ## Type Reference
 
@@ -219,6 +222,42 @@ type LogObservationArgs = {
   startTime?: number;      // ms epoch, defaults to now
   endTime?: number;        // ms epoch, defaults to startTime
 };
+
+type Trace = {
+  traceId: string;
+  name: string;
+  userId?: string;
+  sessionId?: string;
+  tags?: string[];
+  metadata?: string;
+  release?: string;
+};
+
+type Observation = {
+  observationId: string;
+  traceId: string;
+  type: "span" | "generation" | "event" | "embedding" | "agent" | "tool"
+      | "chain" | "retriever" | "guardrail" | "evaluator";
+  name: string;
+  input?: string;
+  output?: string;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  level: "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
+  statusMessage?: string;
+  metadata?: string;
+  startedAt: number;
+  endedAt: number;
+};
+
+type Score = {
+  scoreId: string;
+  traceId: string;
+  name: string;
+  value: number;
+  comment?: string;
+};
 ```
 
 ## Database Schema
@@ -240,6 +279,8 @@ scores: {
 }
 ```
 
+`listRecentTraces()` and `getStats()` read across these tables directly with a full scan — fine for a history view or small dashboard, not intended as a high-volume production query path.
+
 ## Testing
 
 ```bash
@@ -247,6 +288,28 @@ npm run test
 ```
 
 Component logic is tested with [`convex-test`](https://www.npmjs.com/package/convex-test) in `src/component/lib.test.ts`. Import `convex-langfuse/test` in your own app to register this component's schema against your test instance.
+
+## Example App
+
+`example/` is a full Vite + React demo that exercises the entire component end to end against your own Langfuse account:
+
+- **Log a generation** — simulate a finished chat completion (model, prompt, completion, token counts, tags) and export it as a Langfuse generation.
+- **Continue the trace** — attach a non-LLM step (a retrieval, a tool call, a guardrail check) to the same trace via `logSpan()`.
+- **Rate the response** — attach a 👍/👎 `recordScore()` call, with an optional comment.
+- **Trace explorer** — look up any trace by id, or browse the traces recorded for a given user/session, all reactive.
+- **History** — every trace ever recorded in the deployment, newest first, independent of the browser-local demo identity that resets on reload. Expand a trace to see its full generation/step/score detail, and hit **Replay this** to recreate the whole scenario as a brand-new trace live, without retyping anything — useful for anyone poking at the demo who wants to see the flow without filling out forms themselves.
+- **Activity console** — a side-docked live log of every call this app makes into the Langfuse client. Since Langfuse ingestion is one-way (no webhooks call back into Convex), this is the closest thing to a live feed the example has.
+
+Run it from the repo root:
+
+```bash
+npm install --legacy-peer-deps
+npx convex env set LANGFUSE_PUBLIC_KEY pk-lf-xxxxxxxxxxxx
+npx convex env set LANGFUSE_SECRET_KEY sk-lf-xxxxxxxxxxxx
+npm run dev
+```
+
+`npm run dev` starts the Convex backend and the Vite frontend together — there's no need to `cd example` or run either one separately.
 
 ## Limitations
 
