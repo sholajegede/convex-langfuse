@@ -181,9 +181,13 @@ export class Langfuse {
         ? [
             attr(
               "langfuse.observation.usage_details",
+              // Langfuse's usage details object uses "input"/"output"/"total",
+              // not "input_tokens"/"output_tokens" — the latter is silently
+              // ignored, so the generation shows no token usage or cost.
               JSON.stringify({
-                input_tokens: args.inputTokens ?? 0,
-                output_tokens: args.outputTokens ?? 0,
+                input: args.inputTokens ?? 0,
+                output: args.outputTokens ?? 0,
+                total: (args.inputTokens ?? 0) + (args.outputTokens ?? 0),
               }),
             ),
           ]
@@ -302,6 +306,14 @@ export class Langfuse {
 
   async listScores(ctx: RunQueryCtx, args: { traceId: string }) {
     return await ctx.runQuery(this.component.lib.listScores, args);
+  }
+
+  async getStats(ctx: RunQueryCtx) {
+    return await ctx.runQuery(this.component.lib.getStats, {});
+  }
+
+  async listRecentTraces(ctx: RunQueryCtx, args: { limit?: number } = {}) {
+    return await ctx.runQuery(this.component.lib.listRecentTraces, args);
   }
 }
 

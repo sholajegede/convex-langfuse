@@ -10,20 +10,6 @@
 
 import type { FunctionReference } from "convex/server";
 
-type ObservationType =
-  | "span"
-  | "generation"
-  | "event"
-  | "embedding"
-  | "agent"
-  | "tool"
-  | "chain"
-  | "retriever"
-  | "guardrail"
-  | "evaluator";
-
-type Level = "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
-
 /**
  * A utility for referencing a Convex component's exposed API.
  *
@@ -38,6 +24,13 @@ type Level = "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
     lib: {
+      getStats: FunctionReference<
+        "query",
+        "internal",
+        {},
+        { observations: number; scores: number; traces: number },
+        Name
+      >;
       getTrace: FunctionReference<
         "query",
         "internal",
@@ -68,7 +61,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           endedAt: number;
           input?: string;
           inputTokens?: number;
-          level: Level;
+          level: "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
           metadata?: string;
           model?: string;
           name: string;
@@ -78,7 +71,36 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           startedAt: number;
           statusMessage?: string;
           traceId: string;
-          type: ObservationType;
+          type:
+            | "span"
+            | "generation"
+            | "event"
+            | "embedding"
+            | "agent"
+            | "tool"
+            | "chain"
+            | "retriever"
+            | "guardrail"
+            | "evaluator";
+        }>,
+        Name
+      >;
+      listRecentTraces: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          metadata?: string;
+          name: string;
+          release?: string;
+          sessionId?: string;
+          tags?: Array<string>;
+          traceId: string;
+          updatedAt: number;
+          userId?: string;
         }>,
         Name
       >;
@@ -143,7 +165,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           endedAt: number;
           input?: string;
           inputTokens?: number;
-          level: Level;
+          level: "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
           metadata?: string;
           model?: string;
           name: string;
@@ -153,7 +175,17 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           startedAt: number;
           statusMessage?: string;
           traceId: string;
-          type: ObservationType;
+          type:
+            | "span"
+            | "generation"
+            | "event"
+            | "embedding"
+            | "agent"
+            | "tool"
+            | "chain"
+            | "retriever"
+            | "guardrail"
+            | "evaluator";
         },
         string,
         Name

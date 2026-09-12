@@ -85,3 +85,46 @@ describe("scores", () => {
     expect(scores[0].value).toBe(0.9);
   });
 });
+
+describe("recent traces", () => {
+  test("listRecentTraces returns traces newest first, capped by limit", async () => {
+    const t = initConvexTest();
+
+    await t.mutation(api.lib.recordTrace, { traceId: "trace_a", name: "a" });
+    await t.mutation(api.lib.recordTrace, { traceId: "trace_b", name: "b" });
+    await t.mutation(api.lib.recordTrace, { traceId: "trace_c", name: "c" });
+
+    const all = await t.query(api.lib.listRecentTraces, {});
+    expect(all).toHaveLength(3);
+    expect(all[0].traceId).toBe("trace_c");
+
+    const limited = await t.query(api.lib.listRecentTraces, { limit: 2 });
+    expect(limited).toHaveLength(2);
+  });
+});
+
+describe("stats", () => {
+  test("getStats counts traces, observations, and scores", async () => {
+    const t = initConvexTest();
+
+    await t.mutation(api.lib.recordTrace, { traceId: "trace_1", name: "run" });
+    await t.mutation(api.lib.recordObservation, {
+      observationId: "span_1",
+      traceId: "trace_1",
+      type: "generation",
+      name: "openai-call",
+      level: "DEFAULT",
+      startedAt: 1000,
+      endedAt: 1200,
+    });
+    await t.mutation(api.lib.recordScore, {
+      scoreId: "score_1",
+      traceId: "trace_1",
+      name: "relevance",
+      value: 0.9,
+    });
+
+    const stats = await t.query(api.lib.getStats, {});
+    expect(stats).toEqual({ traces: 1, observations: 1, scores: 1 });
+  });
+});

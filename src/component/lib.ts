@@ -126,6 +126,35 @@ export const listScores = query({
   },
 });
 
+// Every trace, newest first, regardless of which user/session it belongs to.
+// Unlike listTracesByUser/listTracesBySession, this doesn't require already
+// knowing an identity to look under — useful for a "history" view where the
+// caller's own userId/sessionId is only a client-side value that doesn't
+// survive a page reload.
+export const listRecentTraces = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(traceValidator),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("traces")
+      .order("desc")
+      .take(args.limit ?? 50);
+  },
+});
+
+export const getStats = query({
+  args: {},
+  returns: v.object({ traces: v.number(), observations: v.number(), scores: v.number() }),
+  handler: async (ctx) => {
+    const [traces, observations, scores] = await Promise.all([
+      ctx.db.query("traces").collect(),
+      ctx.db.query("observations").collect(),
+      ctx.db.query("scores").collect(),
+    ]);
+    return { traces: traces.length, observations: observations.length, scores: scores.length };
+  },
+});
+
 // ─── Mutations ──────────────────────────────────────────────────────────────
 
 export const recordTrace = mutation({
