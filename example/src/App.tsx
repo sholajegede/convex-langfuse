@@ -1,55 +1,48 @@
 import { useState } from "react";
-import { useAction, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import "./App.css";
+import "./theme.css";
+import { Header, type Tab } from "./components/Header";
+import { TopBanner } from "./components/TopBanner";
+import { Console } from "./components/Console";
+import { Home } from "./components/Home";
+import { LogGeneration } from "./components/LogGeneration";
+import { ContinueTrace } from "./components/ContinueTrace";
+import { ScorePanel } from "./components/ScorePanel";
+import { TraceExplorer } from "./components/TraceExplorer";
+import { History } from "./components/History";
+
+function randomId(prefix: string): string {
+  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export default function App() {
-  const [userId] = useState("user_demo");
-  const [traceId, setTraceId] = useState<string | null>(null);
-
-  const logChatCompletion = useAction(api.example.logChatCompletion);
-  const rateResponse = useAction(api.example.rateResponse);
-  const observations = useQuery(
-    api.example.listObservations,
-    traceId ? { traceId } : "skip",
-  );
-
-  async function runExample() {
-    const result = await logChatCompletion({
-      userId,
-      prompt: "What is Convex?",
-      completion: "Convex is a reactive backend platform.",
-      model: "gpt-5",
-      inputTokens: 12,
-      outputTokens: 24,
-    });
-    setTraceId(result.traceId);
-  }
+  const [tab, setTab] = useState<Tab>("home");
+  const [userId] = useState(() => randomId("user"));
+  const [sessionId] = useState(() => randomId("session"));
+  const [currentTraceId, setCurrentTraceId] = useState<string | null>(null);
 
   return (
-    <main className="app">
-      <h1>convex-langfuse</h1>
-      <p>Send LLM traces and generations from your Convex app to Langfuse.</p>
+    <div className="shell">
+      <div className="main">
+        <Header tab={tab} onTab={setTab} />
+        <TopBanner />
 
-      <button onClick={runExample}>Log a sample generation</button>
+        {tab === "home" && <Home />}
 
-      {traceId && (
-        <>
-          <p>
-            Trace <code>{traceId}</code>
-          </p>
-          <button onClick={() => rateResponse({ traceId, value: 1 })}>
-            👍 Rate this response
-          </button>
-          <ul>
-            {observations?.map((o) => (
-              <li key={o.observationId}>
-                {o.type} — {o.name} ({o.model ?? "n/a"})
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </main>
+        {tab === "generation" && (
+          <>
+            <LogGeneration userId={userId} sessionId={sessionId} onTrace={setCurrentTraceId} />
+            <ContinueTrace traceId={currentTraceId} />
+            <ScorePanel traceId={currentTraceId} />
+          </>
+        )}
+
+        {tab === "explorer" && (
+          <TraceExplorer currentTraceId={currentTraceId} userId={userId} sessionId={sessionId} />
+        )}
+
+        {tab === "history" && <History />}
+      </div>
+      <Console />
+    </div>
   );
 }
