@@ -7,6 +7,8 @@
 [![npm downloads](https://img.shields.io/npm/dw/convex-langfuse)](https://www.npmjs.com/package/convex-langfuse)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
+![convex-langfuse demo](./demo.png)
+
 ```ts
 const langfuse = new Langfuse(components.convexLangfuse, {
   publicKey: process.env.LANGFUSE_PUBLIC_KEY!,
