@@ -146,7 +146,7 @@ export class Langfuse {
   }
 
   private async logObservation(
-    ctx: GenericActionCtx<GenericDataModel>,
+    ctx: RunMutationCtx,
     type:
       | "span"
       | "generation"
@@ -237,7 +237,7 @@ export class Langfuse {
 
   /** Log a completed LLM call (model, input, output, token usage) as a Langfuse generation. */
   async logGeneration(
-    ctx: GenericActionCtx<GenericDataModel>,
+    ctx: RunMutationCtx,
     args: LogObservationArgs,
   ): Promise<LogObservationResult> {
     return await this.logObservation(ctx, "generation", args);
@@ -245,7 +245,7 @@ export class Langfuse {
 
   /** Log a non-LLM step (a tool call, a retrieval, a chain step) as a Langfuse span. */
   async logSpan(
-    ctx: GenericActionCtx<GenericDataModel>,
+    ctx: RunMutationCtx,
     args: LogObservationArgs,
   ): Promise<LogObservationResult> {
     return await this.logObservation(ctx, "span", args);
@@ -253,7 +253,7 @@ export class Langfuse {
 
   /** Attach an evaluation score to a trace, via Langfuse's Scores API. */
   async recordScore(
-    ctx: GenericActionCtx<GenericDataModel>,
+    ctx: RunMutationCtx,
     args: { traceId: string; name: string; value: number; comment?: string },
   ): Promise<{ scoreId: string }> {
     const scoreId = randomHex(16);
@@ -319,4 +319,14 @@ export class Langfuse {
 
 type RunQueryCtx = {
   runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
+};
+
+// logObservation, logGeneration, logSpan, and recordScore only ever call
+// ctx.runMutation. Typing them against this minimal structural type instead
+// of the full GenericActionCtx<GenericDataModel> means they accept any real
+// app's ActionCtx, whose DataModel is a concrete set of tables (not
+// assignable to the generic GenericDataModel once an app defines any tables
+// of its own).
+type RunMutationCtx = {
+  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
 };
