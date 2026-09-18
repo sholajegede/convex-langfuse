@@ -3,7 +3,7 @@
 **Send LLM traces, generations, and scores from your Convex app to Langfuse.** Reactive local queries, OpenTelemetry-native ingestion.
 
 [![npm version](https://img.shields.io/npm/v/convex-langfuse)](https://www.npmjs.com/package/convex-langfuse)
-[![Convex Component](https://www.convex.dev/components/badge/sholajegede/convex-langfuse)](https://www.convex.dev/components/convex-langfuse)
+[![Convex Component](https://www.convex.dev/components/badge/convex-langfuse)](https://www.convex.dev/components/convex-langfuse)
 [![npm downloads](https://img.shields.io/npm/dw/convex-langfuse)](https://www.npmjs.com/package/convex-langfuse)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
 
